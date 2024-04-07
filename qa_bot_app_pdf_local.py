@@ -154,10 +154,9 @@ def get_gemma_model_and_tokenizer(model_id, has_cuda):
     return model, tokenizer
 
 if option ==  "Gemma":
-	
-	from huggingface_hub import login
-	login(st.secrets["HF_token"])
-    
+    from huggingface_hub import login
+    login(st.secrets["HF_token"])
+
     has_cuda = torch.cuda.is_available()
 
    
