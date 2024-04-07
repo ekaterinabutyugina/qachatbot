@@ -36,9 +36,7 @@ with st.sidebar:
 st.title("📝 File Q&A with LLMs")
 
 st.write("This app will help you to chat with your documents which are in `txt`, `md`, or `pdf` formats. Simply upload your file, choose a model and ask your question.")
-st.info(" **Note**: \n - for OpeanAI model you'll need to provide your credentials. \n - for Mistral and Gemini you need to have a local cuda-compatible GPU") 
-#st.markdown(" - for OpeanAI model you'll need to provide your credentials.")
-#st.markdown(" - for Mistral and Gemini you need to have a local cuda-compatible GPU")
+st.info(" **Note**: \n - for OpeanAI model you'll need to provide your credentials. \n - for Mistral and Gemini expect to have a better performance with a local cuda-compatible GPU") 
 
 # Upload the file:
 uploaded_file = st.file_uploader(" **Upload an article** ", type=("txt", "md", "pdf"))
@@ -52,9 +50,6 @@ question = st.text_input(
 )
 
 article = ""
-
-# if uploaded_file and question and not openai_api_key:
-#     st.info("Please add your OpenAI API key to continue.")
 
 if uploaded_file and question:# and openai_api_key:
     if uploaded_file.name.split(".")[-1] == "pdf":
@@ -159,6 +154,9 @@ def get_gemma_model_and_tokenizer(model_id, has_cuda):
     return model, tokenizer
 
 if option ==  "Gemma":
+	
+	from huggingface_hub import login
+	login(st.secrets["HF_token"])
     
     has_cuda = torch.cuda.is_available()
 
@@ -175,9 +173,6 @@ if option ==  "Gemma":
     prompt = tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True)
     inputs = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt")
     
-    # if has_cuda:
-    #    inputs = inputs.to("cuda")
-
     tic = time()
     outputs = model.generate(input_ids = inputs.to(model.device),  max_new_tokens=150)
     runtime = time() - tic
