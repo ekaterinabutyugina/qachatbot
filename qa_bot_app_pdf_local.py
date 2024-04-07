@@ -6,6 +6,8 @@ from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
 from pdfminer.pdfpage import PDFPage
 from io import StringIO
+from functools import cache
+from time import time
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import transformers
 import torch
@@ -30,16 +32,20 @@ with st.sidebar:
     "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
 
 
-
 # Set Title:
-st.title("📝 File Q&A with ChatGPT")
+st.title("📝 File Q&A with LLMs")
+
+st.write("This app will help you to chat with your documents which are in `txt`, `md`, or `pdf` formats. Simply upload your file, choose a model and ask your question.")
+st.info(" **Note**: \n - for OpeanAI model you'll need to provide your credentials. \n - for Mistral and Gemini you need to have a local cuda-compatible GPU") 
+#st.markdown(" - for OpeanAI model you'll need to provide your credentials.")
+#st.markdown(" - for Mistral and Gemini you need to have a local cuda-compatible GPU")
 
 # Upload the file:
-uploaded_file = st.file_uploader("Upload an article", type=("txt", "md", "pdf"))
+uploaded_file = st.file_uploader(" **Upload an article** ", type=("txt", "md", "pdf"))
 
 # Text input:
 question = st.text_input(
-    "Ask something about the article",
+    " **Ask something about the article. For example:**",
     value = "Can you give me a short summary?",
     placeholder="Can you give me a short summary?",
     disabled=not uploaded_file,
@@ -47,10 +53,10 @@ question = st.text_input(
 
 article = ""
 
-if uploaded_file and question and not openai_api_key:
-    st.info("Please add your OpenAI API key to continue.")
+# if uploaded_file and question and not openai_api_key:
+#     st.info("Please add your OpenAI API key to continue.")
 
-if uploaded_file and question and openai_api_key:
+if uploaded_file and question:# and openai_api_key:
     if uploaded_file.name.split(".")[-1] == "pdf":
       rsrcmgr = PDFResourceManager()
       retstr = StringIO()
@@ -64,11 +70,9 @@ if uploaded_file and question and openai_api_key:
       article = retstr.getvalue()
       device.close()
       retstr.close()
-      # st.write(article)
 
     else:
       article = uploaded_file.read().decode()
-      # st.write(article)
 
 # Prompting
 my_prompt = f"""Here's an article:{article}.\n\n
@@ -83,78 +87,106 @@ option = st.selectbox(
     )
 
 if option == "OpenAI":
-# ChatGPT Connection with increased answer length:
-    openai.api_key = openai_api_key
-    response = openai.Completion.create(
-        model="gpt-3.5-turbo-instruct",
-        prompt=my_prompt,
-        max_tokens=200,
-    )
 
-    st.write("### Answer")
-    st.write(response['choices'][0]['text'])
+    if uploaded_file and question and not openai_api_key:
+         st.info("Please add your OpenAI API key to continue.")
 
-from time import time
+    if uploaded_file and question and openai_api_key:
+         
+    # ChatGPT Connection with increased answer length:
+        tic = time()   
+        openai.api_key = openai_api_key
+        response = openai.Completion.create(
+            model="gpt-3.5-turbo-instruct",
+            prompt=my_prompt,
+            max_tokens=200,
+        )
+        runtime = time() - tic
+        st.write("### Answer from ChatGPT")
+        st.write(response['choices'][0]['text'])
+        st.write("Time for answer generation is ", "{:.2f}".format(runtime), "seconds")
 
-if option ==  "Mistral":
-    from transformers import AutoTokenizer, AutoModelForCausalLM
-    import transformers
-    import torch
-    
-    
-    st.write("### TBA")
-    model = "mistralai/Mistral-7B-Instruct-v0.2"
-
-    tokenizer = AutoTokenizer.from_pretrained(model)
-    mistral_generate = transformers.pipeline(
+@st.cache_resource 
+def get_mistral_model_and_tokenizer(model_id): 
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    model = transformers.pipeline(
         "text-generation",
-        model=model,
+        model=model_id,
         tokenizer=tokenizer,
         torch_dtype=torch.float32,
         trust_remote_code=True,
         device_map="auto",
     )
-    tic = time()
-    sequences = mistral_generate(
-    my_prompt,
-    max_length=1024,
-    truncation='only_first',
-    do_sample=True,
-    return_full_text=False,
-    temperature=0.01
-    )
-    toc = time()
-    runtime = toc-tic
-    st.write(sequences[0]['generated_text'])
-    st.write(runtime)
+    return model, tokenizer
 
-if option ==  "Gemma":
-    from transformers import AutoTokenizer, AutoModelForCausalLM
-    import transformers
-    import torch
+if option ==  "Mistral":
 
-    # model_id = "google/gemma-2b"# 
-    model_id = "google/gemma-2b-it"
+    has_cuda = torch.cuda.is_available()
+    
+    if not has_cuda:
+        st.write("Please use another lighter model")
+
+    else:
+        st.write("### Answer from Mistral")
+        model_id = "mistralai/Mistral-7B-Instruct-v0.2"
+
+        model, tokenizer =  get_mistral_model_and_tokenizer(model_id)
+
+        tic = time()
+        sequences = model(
+        my_prompt,
+        max_length=1024,
+        truncation='only_first',
+        do_sample=True,
+        return_full_text=False,
+        temperature=0.01
+        )
+        toc = time()
+        runtime = toc-tic
+        st.write(sequences[0]['generated_text'])
+        st.write("Time for answer generation is ", "{:.2f}".format(runtime), "seconds")
+
+# following line is to cache the model after it is loaded at least once
+@st.cache_resource 
+def get_gemma_model_and_tokenizer(model_id, has_cuda): 
     dtype = torch.bfloat16
-
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
-        device_map="cuda",
+        device_map="cuda" if has_cuda else "cpu",
         torch_dtype=dtype,
     )
+    return model, tokenizer
+
+if option ==  "Gemma":
+    
+    has_cuda = torch.cuda.is_available()
+
+   
+    st.write("### Answer from Gemma")
+    model_id = "google/gemma-2b-it"
+
+    model, tokenizer = get_gemma_model_and_tokenizer(model_id, has_cuda)
 
     chat = [
         { "role": "user", "content":  my_prompt },
     ]
 
     prompt = tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True)
-    inputs = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt").to("cuda")
+    inputs = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt")
+    
+    # if has_cuda:
+    #    inputs = inputs.to("cuda")
+
+    tic = time()
     outputs = model.generate(input_ids = inputs.to(model.device),  max_new_tokens=150)
+    runtime = time() - tic
 
     st.write(
         tokenizer.decode(outputs[0])
         [len(chat[0]['content']) + 59: -5]
         )
+    st.write("Time for answer generation is ", "{:.2f}".format(runtime), "seconds")
+
         
    
