@@ -25,8 +25,7 @@ you should be able to run the full set of models including
 [Gemma](https://blog.google/technology/developers/gemma-open-models/), 
 the most recent ones, state of the art models. It will work much faster than here.  
 
-See the demo [here](qachatbot-demo.mp4).
-
+See the demo [here](https://drive.google.com/file/d/1mAMOdkvrkofZ2602DFvbNTqtuVsRhVdc/view?usp=sharing).
 
 As a [Z by HP Global Data Science Ambassador](https://www.hp.com/us-en/workstations/industries/data-science/ambassador-ekaterina-butyugina.html), I have been provided with HP products to facilitate our innovative work. 
 
