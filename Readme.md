@@ -25,7 +25,7 @@ you should be able to run the full set of models including
 [Gemma](https://blog.google/technology/developers/gemma-open-models/), 
 the most recent ones, state of the art models. It will work much faster than here.  
 
-See the demo below: 
+Click the preview below to see the demo: 
 
 [![Here](https://i.ytimg.com/an_webp/GkGSNyTHncE/mqdefault_6s.webp?du=3000&sqp=CL3dp7EG&rs=AOn4CLCo8-jkT6b8MjOdk1AlJEjvja9pWg)](https://www.youtube.com/watch?v=GkGSNyTHncE?si=rHLlknl9tPenKb2w)
 
