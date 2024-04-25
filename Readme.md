@@ -25,7 +25,9 @@ you should be able to run the full set of models including
 [Gemma](https://blog.google/technology/developers/gemma-open-models/), 
 the most recent ones, state of the art models. It will work much faster than here.  
 
-See the demo [here](https://drive.google.com/file/d/1mAMOdkvrkofZ2602DFvbNTqtuVsRhVdc/view?usp=sharing).
+See the demo below: 
+
+[![Here](https://i.ytimg.com/an_webp/GkGSNyTHncE/mqdefault_6s.webp?du=3000&sqp=CL3dp7EG&rs=AOn4CLCo8-jkT6b8MjOdk1AlJEjvja9pWg)](https://www.youtube.com/watch?v=GkGSNyTHncE?si=rHLlknl9tPenKb2w)
 
 As a [Z by HP Global Data Science Ambassador](https://www.hp.com/us-en/workstations/industries/data-science/ambassador-ekaterina-butyugina.html), I have been provided with HP products to facilitate our innovative work. 
 
